@@ -1,0 +1,19 @@
+# Requirements for the GitLab webhook listener
+# Install with: pip install -r requirements.txt --break-system-packages
+#
+# Why Flask and not FastAPI:
+#   This is a single-endpoint internal tool, not a public API.
+#   Flask is simpler, has no async complexity, and has zero startup
+#   overhead compared to uvicorn/FastAPI for this use case.
+#   If the admin portal (Phase 4) needs a more capable backend,
+#   that will be a separate service.
+
+flask>=3.0.0
+gunicorn>=21.0.0
+
+# Why gunicorn:
+#   Flask's built-in dev server is not suitable for production.
+#   Gunicorn is a production-grade WSGI server. The systemd service
+#   uses gunicorn rather than running flask directly.
+#   Even for a single-endpoint internal tool, gunicorn handles
+#   connection errors and restarts workers cleanly.

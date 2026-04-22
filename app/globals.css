@@ -1,0 +1,315 @@
+@import "tailwindcss";
+
+/*
+  Site design tokens
+  Tailwind v4: tokens declared here are auto-exposed as utility classes
+  (e.g. bg-site-primary, font-site-body, text-site-text).
+*/
+@theme {
+  --color-site-primary:        #515151;
+  --color-site-link-hover:     #191970;
+  --color-site-text:           #000000;
+  --color-site-bg:             #ffffff;
+  --color-site-bg-alt:         #f7f6f6;
+  --color-site-border:         #c7c7c7;
+  --color-site-footer-bg:      #191919;
+
+  --color-site-gradient-0:     #7eaecb;
+  --color-site-gradient-1:     #a4c8de;
+  --color-site-gradient-2:     #c4dcea;
+  --color-site-gradient-3:     #e2eff6;
+  --color-site-gradient-4:     #f1f8fc;
+
+  --radius-site-card:          6px;
+  --radius-site-button:        0;
+
+  --container-site:            1440px;
+}
+
+/*
+  Fonts loaded via next/font in app/layout.tsx expose CSS variables
+  (--font-site-title, --font-site-body, --font-site-heading). We bind
+  them to Tailwind font-family utilities here using @theme inline so
+  the variable is resolved at build time, not runtime.
+*/
+@theme inline {
+  --font-site-title:   var(--font-noto-sans);
+  --font-site-body:    var(--font-poppins);
+  --font-site-heading: var(--font-roboto);
+}
+
+/*
+  Baseline typography for MDX-rendered page bodies. Kept minimal and
+  scoped under `.prose-site` so only page content is affected, not
+  chrome like the header/footer. Matches the legacy theme's type rhythm.
+*/
+.prose-site h1 {
+  font-family: var(--font-site-heading);
+  font-size: clamp(1.944rem, 1.771rem + 0.8651vw, 2.4414rem);
+  font-weight: 700;
+  line-height: 1.15;
+  color: var(--color-site-primary);
+  margin-top: 0;
+  margin-bottom: 1rem;
+}
+.prose-site h2 {
+  font-family: var(--font-site-heading);
+  font-size: clamp(1.62rem, 1.5041rem + 0.5793vw, 1.9531rem);
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--color-site-primary);
+  margin-top: 2rem;
+  margin-bottom: 0.75rem;
+}
+.prose-site h3 {
+  font-family: var(--font-site-heading);
+  font-size: clamp(1.35rem, 1.2761rem + 0.3696vw, 1.5625rem);
+  font-weight: 600;
+  line-height: 1.25;
+  margin-top: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+.prose-site p { margin: 0 0 1rem; }
+.prose-site a { color: var(--color-site-primary); text-decoration: underline; text-underline-offset: 2px; }
+.prose-site a:hover { color: var(--color-site-link-hover); }
+/* tel: links render as plain text so phone numbers don't read as clickable;
+   tap-to-call still works on mobile. */
+.prose-site a[href^="tel:"] {
+  color: inherit;
+  text-decoration: none;
+}
+.prose-site ul { list-style: disc; padding-left: 1.5rem; margin: 0 0 1rem; }
+.prose-site ol { list-style: decimal; padding-left: 1.5rem; margin: 0 0 1rem; }
+.prose-site li { margin: 0.25rem 0; }
+.prose-site li > p { margin: 0; }
+.prose-site strong { font-weight: 600; }
+.prose-site blockquote {
+  border-left: 3px solid var(--color-site-border);
+  padding-left: 1rem;
+  margin: 1rem 0;
+  font-style: italic;
+  color: color-mix(in srgb, var(--color-site-text) 75%, transparent);
+}
+.prose-site hr { border: 0; border-top: 1px solid var(--color-site-border); margin: 1.5rem 0; }
+.prose-site code { background: var(--color-site-bg-alt); padding: 0.15em 0.35em; border-radius: 3px; font-size: 0.9em; }
+.prose-site pre { background: var(--color-site-bg-alt); padding: 1rem; border-radius: 6px; overflow-x: auto; margin: 0 0 1rem; }
+.prose-site pre code { background: transparent; padding: 0; }
+.prose-site table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0;
+  font-size: 0.95em;
+}
+.prose-site th,
+.prose-site td {
+  border: 1px solid var(--color-site-border);
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+}
+.prose-site th { background: var(--color-site-bg-alt); font-weight: 600; }
+
+/* ---------------------------------------------------------------
+   Responsive tables — stacked cards on mobile.
+
+   Desktop (≥640px): tables render normally inside the card.
+
+   Mobile (<640px): every <table>, <thead>, <tbody>, <tr>, <td> becomes
+   display:block. The <thead> is hidden, and each <tr> becomes a
+   bordered card with its <td>s stacked vertically. First cell of each
+   row is styled bold to act as a row title (for our tables that's
+   Date/Name/Date — the natural lead field in every case).
+
+   Abandoned approach: horizontal-scroll wrapper with negative margins +
+   padding. Mobile webkit consistently landed scrollLeft past the left
+   padding, clipping ~28px off the first column. Multiple attempts to
+   fix via background-attachment / width:max-content / padding removal
+   did not fully resolve, so we sidestep the scroll model entirely.
+   --------------------------------------------------------------- */
+@media (max-width: 639px) {
+  .prose-site table,
+  .prose-site thead,
+  .prose-site tbody,
+  .prose-site tr,
+  .prose-site th,
+  .prose-site td {
+    display: block;
+    width: auto;
+  }
+  .prose-site thead {
+    /* Hide the header row; each cell carries its own label via font
+       weight on the first td. Visible header labels would require
+       per-column data-label attrs, which GFM markdown doesn't give us. */
+    display: none;
+  }
+  .prose-site table {
+    border: 0;
+    margin: 0 0 1rem;
+  }
+  .prose-site tr {
+    border: 1px solid var(--color-site-border);
+    border-radius: 6px;
+    padding: 0.6rem 0.8rem;
+    margin-bottom: 0.6rem;
+    background: rgba(255, 255, 255, 0.75);
+  }
+  .prose-site td {
+    border: 0;
+    padding: 0.15rem 0;
+    /* overflow-wrap so long emails/URLs break rather than overflow. */
+    overflow-wrap: anywhere;
+  }
+  .prose-site td:first-child {
+    font-weight: 600;
+    color: var(--color-site-primary);
+    padding-bottom: 0.25rem;
+  }
+}
+.prose-site img { max-width: 100%; height: auto; border-radius: 6px; margin: 1rem 0; }
+.prose-site iframe { max-width: 100%; }
+
+/*
+  FullCalendar overrides — scoped to .site-calendar so nothing leaks into
+  other components. FullCalendar v6 auto-injects its baseline CSS; we
+  only override colors, typography, toolbar layout, and event density.
+*/
+.site-calendar .fc {
+  font-family: var(--font-site-body), ui-sans-serif, system-ui, sans-serif;
+  --fc-button-bg-color: var(--color-site-primary);
+  --fc-button-border-color: var(--color-site-primary);
+  --fc-button-hover-bg-color: var(--color-site-link-hover);
+  --fc-button-hover-border-color: var(--color-site-link-hover);
+  --fc-button-active-bg-color: var(--color-site-link-hover);
+  --fc-button-active-border-color: var(--color-site-link-hover);
+  --fc-today-bg-color: color-mix(in srgb, var(--color-site-gradient-3) 45%, transparent);
+  --fc-border-color: var(--color-site-border);
+}
+
+/*
+  Stack the header toolbar into two centered rows: month/year title on
+  top, prev/next buttons below. FullCalendar gives us three chunks —
+  left/center/right — so we force column layout and rely on our config
+  (center: 'title', right: 'prev,next') to land the right elements in
+  the right order.
+*/
+.site-calendar .fc .fc-header-toolbar {
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+.site-calendar .fc .fc-header-toolbar .fc-toolbar-chunk {
+  display: flex;
+  justify-content: center;
+}
+.site-calendar .fc .fc-header-toolbar .fc-toolbar-chunk:empty {
+  display: none;
+}
+.site-calendar .fc .fc-toolbar-title {
+  font-family: var(--font-site-heading), sans-serif;
+  color: var(--color-site-primary);
+  font-size: clamp(1.5rem, 1.1rem + 1.6vw, 2rem);
+  font-weight: 600;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+.site-calendar .fc .fc-button {
+  font-family: var(--font-site-body), sans-serif;
+  font-size: 0.875rem;
+  padding: 0.4rem 1rem;
+  border-radius: 4px;
+  text-transform: none;
+}
+.site-calendar .fc .fc-button-group > .fc-button {
+  margin: 0 0.25rem;
+}
+
+/* Weekday column headers: subtle, readable */
+.site-calendar .fc .fc-col-header-cell-cushion {
+  color: var(--color-site-text);
+  font-weight: 600;
+  padding: 0.5rem 0.25rem;
+  text-decoration: none;
+}
+
+/* Day number in top-right of each cell (reinforces FC default) */
+.site-calendar .fc .fc-daygrid-day-top {
+  justify-content: flex-end;
+}
+.site-calendar .fc .fc-daygrid-day-number {
+  color: var(--color-site-text);
+  font-size: 0.875rem;
+  padding: 4px 6px;
+  text-decoration: none;
+}
+
+/* Event pills: colored blocks with dark text, ellipsis when too long */
+.site-calendar .fc .fc-daygrid-event {
+  border-radius: 3px;
+  padding: 1px 0;
+  margin: 1px 2px;
+}
+.site-calendar .fc .fc-event-title,
+.site-calendar .fc .fc-event-title-container {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 0.78rem;
+  font-weight: 500;
+  padding: 1px 4px;
+}
+
+/* +N more link under day cells */
+.site-calendar .fc .fc-daygrid-more-link {
+  color: var(--color-site-primary);
+  font-size: 0.72rem;
+}
+
+/* Event status variants */
+.site-calendar .site-event { cursor: pointer; }
+.site-calendar .site-event-tentative { opacity: 0.75; border-style: dashed !important; }
+.site-calendar .site-event-canceled {
+  opacity: 0.55;
+  text-decoration: line-through;
+}
+
+/* Multi-event days: small gap between stacked pills */
+.site-calendar .fc .fc-daygrid-day-events {
+  row-gap: 2px;
+}
+
+/* Narrow viewports (below Tailwind `sm` = 640px): hide event titles and
+   keep just the colored block. Day cells are ~50px wide at 375px, so any
+   title would truncate to unreadable ellipsis. Day numbers remain. */
+@media (max-width: 639px) {
+  .site-calendar .fc .fc-event-title,
+  .site-calendar .fc .fc-event-title-container {
+    display: none;
+  }
+  .site-calendar .fc .fc-daygrid-event {
+    min-height: 6px;
+  }
+  .site-calendar .fc .fc-daygrid-day-number {
+    font-size: 0.8rem;
+    padding: 2px 4px;
+  }
+}
+
+/*
+  Site background gradient, fixed-attached on the page
+  background. The values match the live site exactly.
+*/
+html,
+body {
+  background: linear-gradient(
+    180deg,
+    var(--color-site-gradient-0) 0%,
+    var(--color-site-gradient-1) 25%,
+    var(--color-site-gradient-2) 55%,
+    var(--color-site-gradient-3) 85%,
+    var(--color-site-gradient-4) 100%
+  ) fixed;
+  background-attachment: fixed;
+  color: var(--color-site-text);
+  font-family: var(--font-site-body), ui-sans-serif, system-ui, sans-serif;
+  line-height: 1.5;
+}

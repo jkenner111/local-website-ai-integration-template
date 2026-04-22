@@ -1,0 +1,27 @@
+[
+  {
+    "title": "Home",
+    "href": "/",
+    "children": []
+  },
+  {
+    "title": "About",
+    "href": "/about",
+    "children": []
+  },
+  {
+    "title": "Events",
+    "href": "/events",
+    "children": []
+  },
+  {
+    "title": "Calendar",
+    "href": "/calendar",
+    "children": []
+  },
+  {
+    "title": "Contact",
+    "href": "/contact",
+    "children": []
+  }
+]

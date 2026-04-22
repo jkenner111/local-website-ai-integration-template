@@ -1,0 +1,88 @@
+[Unit]
+Description=GitLab Webhook Listener (self-hosted site rebuild)
+Documentation=https://github.com/jkenner111/local-website-ai-integration-template
+# Why After=network.target: ensures the network stack is up before we try
+# to bind to a port. Without this, the service could start before the
+# network is ready and fail silently.
+After=network.target
+
+[Service]
+Type=simple
+
+# Why gunicorn instead of python directly:
+#   gunicorn is a production WSGI server. It handles worker crashes,
+#   connection timeouts, and logging more gracefully than the Flask
+#   dev server. One worker is sufficient for this single-endpoint tool.
+ExecStart=/usr/bin/gunicorn \
+    --workers 1 \
+    --bind 127.0.0.1:9876 \
+    --timeout 30 \
+    --access-logfile %h/logs/webhook-access.log \
+    --error-logfile %h/logs/webhook-error.log \
+    webhook-listener:app
+
+# Working directory — where your deploy/ folder lives on the host
+WorkingDirectory=%h/deploy
+
+# Environment variables
+# Set GITLAB_WEBHOOK_TOKEN to the secret you generate and paste into GitLab.
+# Generate one: python3 -c "import secrets; print(secrets.token_hex(32))"
+# Never commit the actual token value to git.
+Environment=GITLAB_WEBHOOK_TOKEN=REPLACE_WITH_YOUR_TOKEN
+Environment=WEBHOOK_PORT=9876
+
+# Why Restart=on-failure (not always):
+#   'always' would restart even on clean exits (e.g., if you stop it manually).
+#   'on-failure' only restarts on crash, which is what we want.
+Restart=on-failure
+RestartSec=5
+
+# Limit log spam if it crash-loops
+StartLimitIntervalSec=60
+StartLimitBurst=5
+
+[Install]
+WantedBy=default.target
+
+# --------------------------------------------------------------------------
+# Setup instructions
+# --------------------------------------------------------------------------
+#
+# 1. Copy this file to the server:
+#    mkdir -p ~/.config/systemd/user/
+#    cp site-webhook.service ~/.config/systemd/user/
+#
+# 2. Set your token (replace the placeholder above with the real value):
+#    systemctl --user edit site-webhook.service
+#    # Add under [Service]:
+#    # Environment=GITLAB_WEBHOOK_TOKEN=your_actual_token_here
+#
+# 3. Create the log directory:
+#    mkdir -p ~/logs
+#
+# 4. Install Python dependencies:
+#    pip install -r ~/deploy/requirements.txt --break-system-packages
+#
+# 5. Enable and start the service:
+#    systemctl --user daemon-reload
+#    systemctl --user enable site-webhook.service
+#    systemctl --user start site-webhook.service
+#
+# 6. Verify it's running:
+#    systemctl --user status site-webhook.service
+#    curl http://localhost:9876/health
+#
+# 7. Add the Cloudflare tunnel route:
+#    In your Cloudflare tunnel config, add a route:
+#    deploy.yourdomain.com -> http://localhost:9876
+#
+# 8. Add the webhook in GitLab:
+#    Your repo → Settings → Webhooks → Add new webhook
+#    URL: https://deploy.yourdomain.com/deploy
+#    Secret token: (same token you set above)
+#    Trigger: Push events → main branch only
+#    SSL verification: enabled
+#
+# 9. Test it:
+#    GitLab → Webhooks → Test → Push events
+#    Then: tail -f ~/logs/webhook.log

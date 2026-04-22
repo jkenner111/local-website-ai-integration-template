@@ -1,0 +1,21 @@
+---
+title: "Example Event"
+date: "2026-05-01"
+time: "6:00 PM"
+location: "Somewhere"
+status: "confirmed"
+---
+
+An example event to show the event system's shape. Each event lives in its
+own `.mdx` file under `content/events/`, named `YYYY-MM-DD-<slug>.mdx`.
+
+The body (this paragraph) is rendered on the event's detail view. Frontmatter
+drives the events list, the calendar, and the page metadata.
+
+Supported frontmatter fields:
+
+- `title` — required
+- `date` — required, ISO (`YYYY-MM-DD`)
+- `time` — optional, free-form display string
+- `location` — optional
+- `status` — `confirmed` | `tentative` | `canceled` (default: `confirmed`)

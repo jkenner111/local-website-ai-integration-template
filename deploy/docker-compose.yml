@@ -1,0 +1,54 @@
+services:
+  site-web:
+    # Why build from local context instead of pulling an image:
+    #   Your Next.js site has no published Docker image — it's built from
+    #   source. Every deploy pulls the latest code and rebuilds from scratch.
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        # Pass the directory PIN at build time so it's baked into the
+        # static build. Do NOT put this in the image label or inspect output.
+        DIRECTORY_PIN: ${DIRECTORY_PIN}
+
+    container_name: site-web
+
+    # Why restart: unless-stopped:
+    #   Automatically restarts the container if it crashes or on host reboot.
+    #   'unless-stopped' means it won't auto-restart if you manually stop it
+    #   with 'docker compose stop', which is what you want during maintenance.
+    restart: unless-stopped
+
+    # Bind to localhost only — Cloudflare tunnel or Nginx handles external traffic.
+    # Why NOT expose 3000:3000 to 0.0.0.0:
+    #   Binding to all interfaces would expose Next.js directly to the network.
+    #   Routing through Cloudflare tunnel means traffic goes through Cloudflare's
+    #   edge (DDoS protection, TLS termination) before reaching the host.
+    ports:
+      - "127.0.0.1:3000:3000"
+
+    environment:
+      NODE_ENV: production
+      # Add any runtime environment variables here.
+      # For Next.js, variables without NEXT_PUBLIC_ prefix are server-only.
+      # Variables with NEXT_PUBLIC_ are embedded at build time (see args above).
+
+    # Health check so Docker knows when the container is actually ready.
+    # Why: 'docker compose up -d' returns immediately, but Next.js takes a few
+    # seconds to initialize. The health check lets 'docker compose ps' show
+    # accurate status, and the rebuild script uses it to verify the deploy worked.
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+    # Connect to a shared Docker network if you run other services on the
+    # same host and want them on the same bridge. Otherwise leave commented.
+    # networks:
+    #   - site-internal
+
+# networks:
+#   site-internal:
+#     external: true

@@ -280,13 +280,34 @@ function MessageBubble({ message }: { message: ChatMessage }) {
         }
         if (part.type?.startsWith("tool-")) {
           const toolName = part.type.replace(/^tool-/, "");
+          // A tool part is a discriminated union on `state`. Tools that return
+          // an { error } object resolve as "output-available" (a *successful*
+          // call by SDK semantics) and a thrown/aborted tool resolves as
+          // "output-error" — so checking only for "output-available" would
+          // report a failed action as "done". Surface real failures instead.
+          const p = part as { state?: string; errorText?: string; output?: unknown };
+          const outputError =
+            p.output && typeof p.output === "object" && "error" in p.output
+              ? String((p.output as { error: unknown }).error)
+              : null;
+          const failure =
+            p.state === "output-error"
+              ? p.errorText || "the action did not complete"
+              : outputError;
+          const settled = p.state === "output-available" || p.state === "output-error";
           return (
             <div
               key={idx}
-              className="mt-2 rounded border border-gray-200 bg-gray-50 px-2 py-1 text-xs text-gray-500"
+              className={
+                failure
+                  ? "mt-2 rounded border border-red-200 bg-red-50 px-2 py-1 text-xs text-red-600"
+                  : "mt-2 rounded border border-gray-200 bg-gray-50 px-2 py-1 text-xs text-gray-500"
+              }
             >
               <span className="font-mono">{toolName}</span>
-              {"state" in part && part.state === "output-available" ? (
+              {failure ? (
+                <span className="ml-1">— failed: {failure}</span>
+              ) : settled ? (
                 <span className="ml-1 text-gray-400">— done</span>
               ) : (
                 <span className="ml-1 text-gray-400">— running…</span>
